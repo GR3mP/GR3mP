@@ -1,5 +1,5 @@
 /*
- * Copyright 2026 Gleb Obitotsky,
+ * Copyright 2026 Gleb Obitotsky (oximif147@gmail.com),
  *           2026 GR3mPteam
  *
  * GR3mP is free software: you can redistribute it and/or modify
@@ -16,11 +16,38 @@
  * along with GR3mP. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <iostream>
+#include <iomanip>
+#include <cassert>
+#include "../utils/RSA.h"
 
-#include "../crypto/rsa_gen.h"
-// #include <iostream>
+void test_rsa_generation() {
+    std::cout << "[TEST] Starting RSA generation test..." << std::endl;
+
+    utils::RSAKeyPair keys = utils::RSAGenerator::generate(2048);
+
+    assert(!keys.n.empty() && "Modulus n should not be empty");
+    assert(!keys.e.empty() && "Exponent e should not be empty");
+    assert(!keys.d.empty() && "Private key d should not be empty");
+
+    std::cout << "[INFO] Modulus size: " << keys.n.size() << " bytes" << std::endl;
+    assert(keys.n.size() >= 255 && keys.n.size() <= 256);
+
+    assert(keys.e.size() >= 1);
+
+    std::cout << "[INFO] Fingerprint: 0x" << std::hex << keys.fingerprint << std::dec << std::endl;
+    assert(keys.fingerprint != 0 && "Fingerprint should not be zero");
+
+    std::cout << "[SUCCESS] RSA Generation test passed!" << std::endl;
+}
 
 int main() {
-    EVP_PKEY* test_keys = generate_keypair_rsa();
+    try {
+        test_rsa_generation();
+    } catch (const std::exception& e) {
+        std::cerr << "[FAILED] Test crashed with error: " << e.what() << std::endl;
+        return 1;
+    }
     return 0;
 }
+
