@@ -23,6 +23,7 @@
 namespace utils {
 
 RSAKeyPair RSAGenerator::generate(int bits) {
+
     RSAKeyPair key_pair;
 
     BN_CTX* ctx = BN_CTX_new();
@@ -37,7 +38,35 @@ RSAKeyPair RSAGenerator::generate(int bits) {
 
     BN_set_word(e, 65537);
 
+    if (BN_generate_prime_ex(p, bits / 2, 0, nullptr, nullptr, nullptr) && 
+        BN_generate_prime_ex(q, bits / 2, 0, nullptr, nullptr, nullptr)) {
 
+        BN_mul(n, p, q, ctx);
+
+        BN_sub(p_minus_1, p, BN_value_one());
+        BN_sub(q_minus_1, q, BN_value_one());
+        BN_mul(phi, p_minus_1, q_minus_1, ctx);
+
+        if (BN_mod_inverse(d, e, phi, ctx)) {
+            key_pair.n = bn_to_bytes(n);
+            key_pair.e = bn_to_bytes(e);
+            key_pair.d = bn_to_bytes(d);
+
+            key_pair.fingerprint = calculate_fingerprint(n, e);
+        }
+    }
+
+    BN_clear_free(p);
+    BN_clear_free(q);
+    BN_clear_free(d);
+    BN_clear_free(phi);
+    BN_clear_free(p_minus_1);
+    BN_clear_free(q_minus_1); 
+    BN_clear_free(n);
+    BN_clear_free(e);
+    BN_CTX_free(ctx);
+
+    return key_pair;
 }
 
 } // namespace utils
