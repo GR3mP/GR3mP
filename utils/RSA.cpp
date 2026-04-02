@@ -16,6 +16,28 @@
  * along with GR3mP. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "BigNum.h"
+#include "RSA.h"
 #include <openssl/sha.h>
 #include <openssl/crypto.h>
+
+namespace utils {
+
+RSAKeyPair RSAGenerator::generate(int bits) {
+    RSAKeyPair key_pair;
+
+    BN_CTX* ctx = BN_CTX_new();
+    BIGNUM* p = BN_new();
+    BIGNUM* q = BN_new();
+    BIGNUM* n = BN_new();
+    BIGNUM* e = BN_new();
+    BIGNUM* d = BN_new();
+    BIGNUM* phi = BN_new();
+    BIGNUM* p_minus_1 = BN_new();
+    BIGNUM* q_minus_1 = BN_new();
+
+    BN_set_word(e, 65537);
+
+
+}
+
+} // namespace utils
