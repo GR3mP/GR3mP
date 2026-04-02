@@ -69,4 +69,61 @@ RSAKeyPair RSAGenerator::generate(int bits) {
     return key_pair;
 }
 
+std::vector<uint8_t> RSAGenerator::bn_to_bytes(BIGNUM* bn) {
+    int len = BN_num_bytes(bn);
+    if (len <= 0) return {};
+
+    std::vector<uint8_t> res(len);
+    BN_bn2bin(bn, res.data());
+    return res;
+}
+
+void update_sha1_with_tl_bytes(SHA_CTX* ctx, const std::vector<uint8_t>& data) {
+    uint32_t len = static_cast<uint32_t>(data.size());
+    uint8_t header[4];
+    int header_len;
+
+    if (len < 254) {
+        header[0] = static_cast<uint8_t>(len);
+        header_len = 1;
+    } else {
+        header[0] = 254;
+        header[1] = static_cast<uint8_t>(len & 0xFF);
+        header[2] = static_cast<uint8_t>((len >> 8) & 0xFF);
+        header[3] = static_cast<uint8_t>((len >> 16) & 0xFF);
+        header_len = 4;
+    }
+
+    SHA1_Update(ctx, header, header_len);
+    SHA1_Update(ctx, data.data(), data.size());
+
+    int total_len = header_len + static_cast<int>(data.size());
+    int padding = (4 - (total_len % 4)) % 4;
+    if (padding > 0) {
+        uint8_t pad_bytes[3] = {0, 0, 0};
+        SHA1_Update(ctx, pad_bytes, padding);
+    }
+}
+
+int64_t RSAGenerator::calculate_fingerprint(BIGNUM* n, BIGNUM* e) {
+    std::vector<uint8_t> n_bytes = bn_to_bytes(n);
+    std::vector<uint8_t> e_bytes = bn_to_bytes(e);
+
+    SHA_CTX sha1;
+    SHA1_Init(&sha1);
+
+    update_sha1_with_tl_bytes(&sha1, n_bytes);
+    update_sha1_with_tl_bytes(&sha1, e_bytes);
+
+    uint8_t hash[SHA_DIGEST_LENGTH];
+    SHA1_Final(hash, &sha1);
+
+    int64_t fingerprint = 0;
+    for (int i = 0; i < 8; i++) {
+        fingerprint |= static_cast<int64_t>(hash[SHA_DIGEST_LENGTH - 8 + i]) << (8 * i);
+    }
+    
+    return fingerprint;
+}
+
 } // namespace utils
