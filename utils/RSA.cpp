@@ -1,6 +1,6 @@
 /*
  * Copyright 2026 Gleb Obitotsky (oximif174@gmail.com),
- *           2026 GR3mPteam
+ * 2026 GR3mPteam
  *
  * GR3mP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -11,13 +11,12 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
- *  
- * You should have received a copy of the GNU General Public License
+ * * You should have received a copy of the GNU General Public License
  * along with GR3mP. If not, see <https://www.gnu.org/licenses/>.
  */
 
 #include "RSA.h"
-#include <openssl/sha.h>
+#include <openssl/evp.h>
 #include <openssl/crypto.h>
 
 namespace utils {
@@ -78,7 +77,7 @@ std::vector<uint8_t> RSAGenerator::bn_to_bytes(BIGNUM* bn) {
     return res;
 }
 
-void update_sha1_with_tl_bytes(SHA_CTX* ctx, const std::vector<uint8_t>& data) {
+void update_sha1_with_tl_bytes(EVP_MD_CTX* ctx, const std::vector<uint8_t>& data) {
     uint32_t len = static_cast<uint32_t>(data.size());
     uint8_t header[4];
     int header_len;
@@ -94,14 +93,14 @@ void update_sha1_with_tl_bytes(SHA_CTX* ctx, const std::vector<uint8_t>& data) {
         header_len = 4;
     }
 
-    SHA1_Update(ctx, header, header_len);
-    SHA1_Update(ctx, data.data(), data.size());
+    EVP_DigestUpdate(ctx, header, header_len);
+    EVP_DigestUpdate(ctx, data.data(), data.size());
 
     int total_len = header_len + static_cast<int>(data.size());
     int padding = (4 - (total_len % 4)) % 4;
     if (padding > 0) {
         uint8_t pad_bytes[3] = {0, 0, 0};
-        SHA1_Update(ctx, pad_bytes, padding);
+        EVP_DigestUpdate(ctx, pad_bytes, padding);
     }
 }
 
@@ -109,18 +108,22 @@ int64_t RSAGenerator::calculate_fingerprint(BIGNUM* n, BIGNUM* e) {
     std::vector<uint8_t> n_bytes = bn_to_bytes(n);
     std::vector<uint8_t> e_bytes = bn_to_bytes(e);
 
-    SHA_CTX sha1;
-    SHA1_Init(&sha1);
+    EVP_MD_CTX* mdctx = EVP_MD_CTX_new();
+    const EVP_MD* md = EVP_get_digestbyname("SHA1");
 
-    update_sha1_with_tl_bytes(&sha1, n_bytes);
-    update_sha1_with_tl_bytes(&sha1, e_bytes);
+    EVP_DigestInit_ex(mdctx, md, nullptr);
 
-    uint8_t hash[SHA_DIGEST_LENGTH];
-    SHA1_Final(hash, &sha1);
+    update_sha1_with_tl_bytes(mdctx, n_bytes);
+    update_sha1_with_tl_bytes(mdctx, e_bytes);
+
+    uint8_t hash[20];
+    unsigned int hash_len = 0;
+    EVP_DigestFinal_ex(mdctx, hash, &hash_len);
+    EVP_MD_CTX_free(mdctx);
 
     int64_t fingerprint = 0;
     for (int i = 0; i < 8; i++) {
-        fingerprint |= static_cast<int64_t>(hash[SHA_DIGEST_LENGTH - 8 + i]) << (8 * i);
+        fingerprint |= static_cast<int64_t>(hash[hash_len - 8 + i]) << (8 * i);
     }
     
     return fingerprint;
