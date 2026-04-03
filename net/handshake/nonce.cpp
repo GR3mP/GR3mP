@@ -1,5 +1,5 @@
 /*
- * Copyright 2026 Gleb Obitotsky,
+ * Copyright 2026 Gleb Obitotsky (oximif174@gmail.com),
  *           2026 GR3mPteam
  *
  * GR3mP is free software: you can redistribute it and/or modify
@@ -16,14 +16,5 @@
  * along with GR3mP. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "nonce.h"
 
-#ifndef RSA_GEN_H
-#define RSA_GEN_H
-
-struct evp_pkey_st;
-typedef struct evp_pkey_st EVP_PKEY;
-
-EVP_PKEY* generate_keypair_rsa();
-void free_keypair(EVP_PKEY* pkey);
-
-#endif
