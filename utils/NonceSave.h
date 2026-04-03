@@ -1,6 +1,6 @@
 /*
  * Copyright 2026 Gleb Obitotsky (oximif174@gmail.com),
- * 2026 GR3mPteam
+ *           2026 GR3mPteam
  *
  * GR3mP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -11,39 +11,35 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
+ *  
  * You should have received a copy of the GNU General Public License
  * along with GR3mP. If not, see <https://www.gnu.org/licenses/>.
  */
 
 #pragma once
 
-#include <cstdint>
+#include <map>
 #include <array>
 #include <vector>
-#include "../utils/NonceSave.h"
+#include <chrono>
+#include <cstdint>
 
-namespace transport {
+namespace utils::nonce::save {
 
-namespace abridged {
+struct NonceContext {
+    std::chrono::system_clock::time_point created_at;
+    uint32_t expires_in_sec = 60;
+};
 
-namespace nonce {
+class NonceManager {
+private:
+    std::map<std::array<uint8_t, 16>, NonceContext> active_nonces;
 
-    #pragma pack(push, 1)
-    struct packet {
-        uint8_t flag = 0xef; // Abridged transor
-        uint8_t length = 0x05; // size (id 4 byte + nonce 16 byte) / 4 = 5 byte
-        uint32_t id = 0xf3b3426e; // magic id
-        std::array<uint8_t, 16> nonce; // nonce (net/handshake/nonce.h)
-        
-    };
-
-    std::vector<uint8_t> create_packet (const std::array<uint8_t, 16>& raw_nonce, 
-                                 utils::nonce::save::NonceManager& manager);
+public:
+    void save_to_memory(const std::array<uint8_t, 16>& nonce);
+    bool verify_and_remove(const std::array<uint8_t, 16>& nonce);
     
-} // namespace nonce
-    
-} // namespace abridged
+    void cleanup_expired();
+};
 
-} // namespace transport
-
-#pragma pack(pop)
+} // namespace utils::nonce::save

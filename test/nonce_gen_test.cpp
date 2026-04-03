@@ -27,6 +27,15 @@ void test_nonce_generation() {
         std::cout << std::hex << std::setw(2) << std::setfill('0') << (int)b << "";
     }
     std::cout << "\n";
+
+    std::vector<unsigned char> id = handshake::nonce::generate_nonce(4);
+
+    std::cout << "TEST: generate id for nonce ";
+    for (unsigned char a: id) {
+        std::cout << std::hex << std::setw(2) << std::setfill('0') << (int)a << "";
+    }
+    std::cout << "\n";
+
 }
 
 int main() {
