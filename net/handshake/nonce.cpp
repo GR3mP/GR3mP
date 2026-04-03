@@ -24,11 +24,11 @@ namespace handshake {
 namespace nonce {
 
     std::vector<unsigned char> generate_nonce(size_t count) {
-        std::vector<unsigned char> buffer(count);
-        if (RAND_bytes(buffer.data(), count) != 1) {
+        std::vector<unsigned char> nonce(count);
+        if (RAND_bytes(nonce.data(), count) != 1) {
             std::cerr << "[!] ERROR: Field generate nonce" << "\n";
         }
-        return buffer;
+        return nonce;
     }
 } // namespace nonce
 
