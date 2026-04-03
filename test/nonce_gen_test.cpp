@@ -15,18 +15,26 @@
  * along with GR3mP. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "../net/handshake/nonce.h"
+
 #include <iostream>
-#include <fstream>
-#include <vector>
-#include <iomanip>
-#include <openssl/rand.h>
 
-namespace handshake {
+void test_nonce_generation() {
+    std::vector<unsigned char> nonce = handshake::nonce::generate_nonce(16);
 
-namespace nonce {
+    std::cout << "TEST: generate nonce ";
+    for (unsigned char b: nonce) {
+        std::cout << std::hex << std::setw(2) << std::setfill('0') << (int)b << "";
+    }
+    std::cout << "\n";
+}
 
-    std::vector<unsigned char> generate_nonce(size_t count);
-
-} // namespace nonce
-
-} // namespace handshake
+int main() {
+    try {
+        test_nonce_generation();
+    } catch (const std::exception& e) {
+        std::cerr << "[FAILED] Test crashed with error: " << e.what() << "\n";
+        return 1;
+    }
+    return 0;
+}

@@ -3,3 +3,4 @@ rsa_test
 *.a
 *.dll
 *.out
+nonce_test
